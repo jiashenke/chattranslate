@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能翻译聊天工具</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.3.1/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/2.0.3/marked.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cae;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --info-color: #17a2b8;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 15px 0;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+        
+        .header h1 {
+            color: var(--primary-color);
+            margin: 0;
+            font-size: 1.8rem;
+        }
+        
+        .header p {
+            color: var(--secondary-color);
+            margin: 10px 0 0;
+            font-size: 1rem;
+        }
+        
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background-color: #f9f9f9;
+        }
+        
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message-original {
+            align-self: flex-start;
+            background-color: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px 10px 10px 0;
+            padding: 12px;
+            max-width: 85%;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message-translated {
+            align-self: flex-end;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 10px 10px 0 10px;
+            padding: 12px;
+            max-width: 85%;
+            margin-top: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+        
+        .message-content {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .message-content img {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .message-content pre {
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-size: 0.85rem;
+        }
+        
+        .message-content code {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: rgba(0, 0, 0, 0.05);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 0.85rem;
+        }
+        
+        .input-area {
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background-color: white;
+            border-top: 1px solid #e0e0e0;
+            flex-shrink: 0;
+        }
+        
+        .textarea-container {
+            position: relative;
+            margin-bottom: 8px;
+            width: 100%;
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 80px;
+            max-height: 300px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(74, 111, 165, 0.2);
+        }
+        
+        .textarea-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: #777;
+            margin-top: 5px;
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 0.85rem;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .language-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+                height: auto;
+                min-height: 100vh;
+            }
+            
+            .header {
+                padding: 10px 0;
+                margin-bottom: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .message-original, .message-translated {
+                max-width: 90%;
+                padding: 10px;
+            }
+            
+            textarea {
+                min-height: 70px;
+                padding: 10px;
+            }
+            
+            button {
+                padding: 6px 12px;
+            }
+        }
+        
+        /* Markdown样式增强 */
+        .markdown-content h1, .markdown-content h2, .markdown-content h3 {
+            margin-top: 0.8em;
+            margin-bottom: 0.4em;
+        }
+        
+        .markdown-content ul, .markdown-content ol {
+            padding-left: 1.5em;
+        }
+        
+        .markdown-content blockquote {
+            border-left: 3px solid #ddd;
+            padding-left: 0.8em;
+            color: #777;
+            margin-left: 0;
+        }
+        
+        .markdown-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 0.8em;
+            font-size: 0.85rem;
+        }
+        
+        .markdown-content th, .markdown-content td {
+            border: 1px solid #ddd;
+            padding: 6px;
+            text-align: left;
+        }
+        
+        .markdown-content th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-language"></i> 智能翻译聊天工具</h1>
+            <p>输入中文或英文，自动翻译成另一种语言</p>
+        </div>
+        
+        <div class="chat-container">
+            <div class="messages" id="messages">
+                <!-- 消息将在这里动态添加 -->
+                <div class="welcome-message">
+                    <p>欢迎使用智能翻译工具！输入中文或英文开始对话。</p>
+                </div>
+            </div>
+            
+            <div class="input-area">
+                <div class="textarea-container">
+                    <textarea id="input-text" placeholder="输入中文或英文..." autofocus></textarea>
+                    <div class="textarea-footer">
+                        <div class="language-indicator">
+                            <span id="source-lang">自动检测</span>
+                            <i class="fas fa-arrow-right"></i>
+                            <span id="target-lang">自动翻译</span>
+                        </div>
+                        <div class="buttons">
+                            <button id="clear-btn"><i class="fas fa-trash"></i> 清空</button>
+                            <button id="send-btn"><i class="fas fa-paper-plane"></i> 发送</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('input-text');
+            const sendBtn = document.getElementById('send-btn');
+            const clearBtn = document.getElementById('clear-btn');
+            const messagesContainer = document.getElementById('messages');
+            const sourceLangSpan = document.getElementById('source-lang');
+            const targetLangSpan = document.getElementById('target-lang');
+            
+            // 自动调整输入框高度
+            function adjustTextareaHeight() {
+                inputText.style.height = 'auto';
+                inputText.style.height = Math.min(inputText.scrollHeight, 300) + 'px';
+            }
+            
+            inputText.addEventListener('input', adjustTextareaHeight);
+            
+            // 初始化高度
+            adjustTextareaHeight();
+            
+            // 清空输入框
+            clearBtn.addEventListener('click', function() {
+                inputText.value = '';
+                adjustTextareaHeight();
+            });
+            
+            // 发送消息
+            function sendMessage() {
+                const text = inputText.value.trim();
+                if (!text) return;
+                
+                // 禁用按钮
+                sendBtn.disabled = true;
+                sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 翻译中...';
+                
+                // 添加到消息列表
+                addMessage(text, 'original');
+                
+                // 发送到服务器翻译
+                fetch('/translate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text: text }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    // 更新语言指示器
+                    sourceLangSpan.textContent = data.source_lang === 'zh' ? '中文' : '英文';
+                    targetLangSpan.textContent = data.target_lang === 'zh' ? '中文' : '英文';
+                    
+                    // 添加翻译结果
+                    addMessage(data.translated_text, 'translated', data.translated_html);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    addMessage(`翻译错误: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                    // 清空输入框并恢复按钮状态
+                    inputText.value = '';
+                    adjustTextareaHeight();
+                    sendBtn.disabled = false;
+                    sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> 发送';
+                    inputText.focus();
+                });
+            }
+            
+            // 添加消息到聊天界面
+            function addMessage(text, type, html = null) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message message-${type}`;
+                
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'message-header';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content markdown-content';
+                
+                if (type === 'original') {
+                    headerDiv.innerHTML = `
+                        <span><i class="fas fa-user"></i> 你</span>
+                        <span>${new Date().toLocaleTimeString()}</span>
+                    `;
+                    contentDiv.textContent = text;
+                } else if (type === 'translated') {
+                    headerDiv.innerHTML = `
+                        <span><i class="fas fa-robot"></i> 翻译</span>
+                        <span>${new Date().toLocaleTimeString()}</span>
+                    `;
+                    contentDiv.innerHTML = html || marked.parse(text);
+                } else if (type === 'error') {
+                    headerDiv.innerHTML = `
+                        <span><i class="fas fa-exclamation-triangle"></i> 错误</span>
+                        <span>${new Date().toLocaleTimeString()}</span>
+                    `;
+                    contentDiv.textContent = text;
+                }
+                
+                messageDiv.appendChild(headerDiv);
+                messageDiv.appendChild(contentDiv);
+                messagesContainer.appendChild(messageDiv);
+                
+                // 滚动到底部
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                
+                // 高亮代码块
+                document.querySelectorAll('pre code').forEach((block) => {
+                    hljs.highlightElement(block);
+                });
+            }
+            
+            // 点击发送按钮
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // 按Enter发送，Shift+Enter换行
+            inputText.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 自动检测语言变化
+            inputText.addEventListener('input', function() {
+                const text = this.value.trim();
+                if (!text) {
+                    sourceLangSpan.textContent = '自动检测';
+                    targetLangSpan.textContent = '自动翻译';
+                    return;
+                }
+                
+                // 简单检测中文
+                const hasChinese = /[\u4e00-\u9fa5]/.test(text);
+                sourceLangSpan.textContent = hasChinese ? '中文' : '英文';
+                targetLangSpan.textContent = hasChinese ? '英文' : '中文';
+            });
+        });
+    </script>
+</body>
+</html>
